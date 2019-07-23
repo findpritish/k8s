@@ -4,7 +4,7 @@ The Kubernetes example [github] (https://github.com/kubernetes/examples/tree/mas
 
 ### Deployment conditions
 
-* A kubernetes cluster, see [Cluster Deployment] (../deploy/cluster.md)
+* A kubernetes cluster
 * kube-dns is working properly
 
 ### Create a namespace
