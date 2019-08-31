@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: locator-public
+  namespace: geode
+spec:
+  ports:
+  - port: 7070
+    name: http
+  type: LoadBalancer
+  selector:
+    app: locator
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: locator
+  namespace: geode
+spec:
+  ports:
+  - port: 10334
+    name: locator
+  clusterIP: None
+  selector:
+    app: locator
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: locator
+  namespace: geode
+spec:
+  selector:
+    matchLabels:
+      app: locator
+  serviceName: "locator"
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: locator
+    spec:
+      containers:
+      - name: locator
+        image: apachegeode/geode:1.8.0
+        command:
+        - sh
+        - -c
+        - |
+          sh /geode-config/genenete-properties.sh locator && \
+          gfsh start locator \
+              --name=${HOSTNAME} \
+              --dir=/data \
+              --port=10334 \
+              --properties-file=/root/geode.properties && \
+          while true; do
+            sleep 2
+          done
+        ports:
+        - containerPort: 10334
+          name: locator
+        - containerPort: 1099
+          name: jmx
+        - containerPort: 7070
+          name: http
+        volumeMounts:
+        - name: geode-config
+          mountPath: /geode-config
+        - name: geode-data
+          mountPath: /data
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - |
+              PID=$(cat /data/vf.gf.locator.pid) && [ -x /proc/${PID} ]
+          initialDelaySeconds: 15
+          periodSeconds: 1
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - sh
+              - -c
+              - |
+                gfsh stop locator --dir=/data
+      volumes:
+      - name: geode-config
+        configMap:
+          name: geode-config
+      - name: geode-data
+        persistentVolumeClaim:
+          claimName: geode-data
+      affinity:
+         podAntiAffinity:
+           requiredDuringSchedulingIgnoredDuringExecution:
+             - labelSelector:
+                 matchExpressions:
+                   - key: "app"
+                     operator: In
+                     values:
+                     - locator
+               topologyKey: "kubernetes.io/hostname"
+  volumeClaimTemplates:
+  - metadata:
+      name: geode-data
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: locator
+  namespace: geode
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: locator
