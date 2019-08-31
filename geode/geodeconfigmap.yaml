@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: geode-config
+  namespace: geode
+data:
+  genenete-properties.sh: |
+    #!/bin/bash
+    SUBDOMAIN=$1
+    echo "Waiting a bit so that other locators could be ready"
+    sleep 5
+
+    echo "locator-0.locator[10334]" > /tmp/servers
+    for i in `seq 1 50`;do
+      ping locator-${i}.locator -c 1 > /dev/null 2>&1
+      if [ $? != 0 ];then
+        break;
+      fi
+      echo "locator-${i}.locator[10334]" >> /tmp/servers
+    done
+  
+    LOCATORS=$(cat /tmp/servers | paste -s -d ',' -)
+
+    cat <<EOF > /root/geode.properties
+    log-level=config
+    locators=${LOCATORS}
+    bind-address=${HOSTNAME}.${SUBDOMAIN}
+    server-bind-address=${HOSTNAME}.${SUBDOMAIN}
+    jmx-manager-bind-address=${HOSTNAME}.${SUBDOMAIN}
+    enable-cluster-configuration=false
+    EOF
+
+    echo "Genereated /root/geode.properties"
