@@ -11,7 +11,8 @@ The Kubernetes example [github] (https://github.com/kubernetes/examples/tree/mas
 
 namespace-spark-cluster.yaml
 
-`` Yaml
+
+```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
