@@ -1,5 +1,5 @@
 
-# KeyClock
+# KeyCloak
   Open Source Identity and Access Management For Modern Applications and Services
 
   Deploying **KeyCloak** on Kubernetes
