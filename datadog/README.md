@@ -23,3 +23,11 @@ $ kubectl create -f serviceaccount.yml
 $ kubectl create -f clusterrolebinding.yml
 
 ```
+Apply daemonset to your cluster
+
+```bash
+$ kubectl create -f datadog-ds.yml
+
+```
+
+Happy metrix flow from cluster to DG
