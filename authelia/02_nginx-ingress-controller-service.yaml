@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ingress-controller-service
+  namespace: authelia
+  labels:
+    k8s-app: nginx-ingress-controller
+spec:
+  selector:
+    k8s-app: nginx-ingress-controller
+  ports:
+    - port: 80
+      name: http
+    - port: 443
+      name: https
+  externalIPs:
+    - 192.168.39.26  # <------- Replace this IP with your public IP or use a LoadBalancer service type
