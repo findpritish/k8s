@@ -1,0 +1,90 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-app
+  namespace: authelia
+  labels:
+    app: test-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+    spec:
+      containers:
+        - name: test-app
+          imagePullPolicy: Always
+          image: nginx
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-app-service
+  namespace: authelia
+  labels:
+    app: test-app
+spec:
+  selector:
+    app: test-app
+  ports:
+    - port: 80
+      name: http
+      targetPort: 80
+
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: secure-ingress
+  namespace: authelia
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/ingress.allow-http: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/auth-url: "http://authelia-service.authelia.svc.cluster.local/api/verify"
+    nginx.ingress.kubernetes.io/auth-signin: "https://home.example.com/"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+spec:
+  tls:
+    - secretName: test-app-tls
+      hosts:
+        - public.example.com
+        - admin.example.com
+        - secure.example.com
+        - singlefactor.example.com
+  rules:
+    - host: public.example.com
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: test-app-service
+              servicePort: 80
+    - host: admin.example.com
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: test-app-service
+              servicePort: 80
+    - host: secure.example.com
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: test-app-service
+              servicePort: 80
+    - host: singlefactor.example.com
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: test-app-service
+              servicePort: 80
