@@ -70,7 +70,7 @@ authentication_backend:
   # Disable both the HTML element and the API for reset password functionality
   disable_reset_password: false
   file:
-    path: /etc/authelia/users_database.yml
+    path: /etc/authelia/users.yaml
   # # LDAP backend configuration.
   # #
   # # This backend allows Authelia to be scaled to more
